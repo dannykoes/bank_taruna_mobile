@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_constants.dart';
@@ -7,12 +8,30 @@ import '../../core/widgets/app_card.dart';
 import '../../core/widgets/brand_header.dart';
 import '../../core/widgets/responsive_container.dart';
 import '../../core/widgets/section_header.dart';
+import '../home/home_data.dart';
+import '../home/home_repository.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final homeData = ref.watch(homeDataProvider).maybeWhen(
+          data: (data) => data,
+          orElse: () => null,
+        );
+    final profileText = homeData?.profileText ?? HomeData.defaultProfileText;
+    final visionMissionText =
+        homeData?.visionMissionText ?? HomeData.defaultVisionMissionText;
+    final visionText = homeData?.visionText ?? HomeData.defaultVisionText;
+    final missionTexts = homeData?.missionTexts ?? HomeData.defaultMissionTexts;
+    final starsValues = homeData?.starsValues ?? HomeData.defaultStarsValues;
+    final contactPhone = homeData?.contactPhone ?? AppConstants.phone;
+    final contactWhatsapp = homeData?.contactWhatsapp ?? AppConstants.whatsapp;
+    final contactWhatsappDisplay =
+        homeData?.contactWhatsappDisplay ?? AppConstants.whatsappDisplay;
+    final contactEmail = homeData?.contactEmail ?? AppConstants.email;
+
     return ListView(
       children: [
         ResponsiveContainer(
@@ -27,21 +46,28 @@ class ProfileScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(28),
-                  gradient: const LinearGradient(colors: [AppColors.primaryBlue, AppColors.primaryRed]),
+                  gradient: const LinearGradient(
+                      colors: [AppColors.primaryBlue, AppColors.primaryRed]),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.account_balance_rounded, color: Colors.white, size: 42),
+                    const Icon(Icons.account_balance_rounded,
+                        color: Colors.white, size: 42),
                     const SizedBox(height: 14),
                     Text(
                       AppConstants.bankName,
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.w900),
+                      style: Theme.of(context)
+                          .textTheme
+                          .headlineSmall
+                          ?.copyWith(
+                              color: Colors.white, fontWeight: FontWeight.w900),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      AppConstants.ojkLpsNote,
-                      style: TextStyle(color: Colors.white.withOpacity(0.9), height: 1.4),
+                      profileText,
+                      style: TextStyle(
+                          color: Colors.white.withOpacity(0.9), height: 1.4),
                     ),
                   ],
                 ),
@@ -52,15 +78,24 @@ class ProfileScreen extends StatelessWidget {
                 subtitle: 'Ringkasan profil dari website Bank Taruna.',
               ),
               const SizedBox(height: 12),
-              const _VisionMissionCard(),
+              _VisionMissionCard(
+                visionMissionText: visionMissionText,
+                visionText: visionText,
+                missionTexts: missionTexts,
+              ),
               const SizedBox(height: 24),
               const SectionHeader(title: 'Nilai Layanan'),
               const SizedBox(height: 12),
-              const _ValueGrid(),
+              _ValueGrid(values: starsValues),
               const SizedBox(height: 24),
               const SectionHeader(title: 'Hubungi Kami'),
               const SizedBox(height: 12),
-              _ContactCard(),
+              _ContactCard(
+                phone: contactPhone,
+                whatsapp: contactWhatsapp,
+                whatsappDisplay: contactWhatsappDisplay,
+                email: contactEmail,
+              ),
               const SizedBox(height: 24),
               OutlinedButton.icon(
                 onPressed: () => LaunchHelper.openUrl(AppConstants.baseUrl),
@@ -76,27 +111,41 @@ class ProfileScreen extends StatelessWidget {
 }
 
 class _VisionMissionCard extends StatelessWidget {
-  const _VisionMissionCard();
+  const _VisionMissionCard({
+    required this.visionMissionText,
+    required this.visionText,
+    required this.missionTexts,
+  });
+
+  final String visionMissionText;
+  final String visionText;
+  final List<String> missionTexts;
 
   @override
   Widget build(BuildContext context) {
-    return const AppCard(
+    return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _MiniTitle(icon: Icons.visibility_rounded, title: 'Visi'),
-          SizedBox(height: 10),
-          Text(
-            'Menjadi BPR yang Bersih, Sehat, dan Terpercaya.',
-            style: TextStyle(fontWeight: FontWeight.w800, height: 1.4),
-          ),
-          SizedBox(height: 20),
-          _MiniTitle(icon: Icons.flag_rounded, title: 'Misi'),
-          SizedBox(height: 10),
-          _MissionText('Memberikan pelayanan terbaik kepada nasabah serta berperan aktif membantu pemerintah dalam pengembangan UMKM.'),
-          _MissionText('Meningkatkan kinerja BPR yang sehat, kuat, efisien, profesional, dan berkesinambungan.'),
-          _MissionText('Memberikan pengetahuan tentang manajemen keuangan kepada nasabah.'),
-          _MissionText('Menjadikan pemasaran sebagai konsultan keuangan dan produk bagi nasabah.'),
+          if (visionMissionText.trim().isNotEmpty) ...[
+            const _MiniTitle(icon: Icons.flag_rounded, title: 'Visi & Misi'),
+            const SizedBox(height: 10),
+            Text(
+              visionMissionText,
+              style: const TextStyle(fontWeight: FontWeight.w800, height: 1.4),
+            ),
+          ] else ...[
+            const _MiniTitle(icon: Icons.visibility_rounded, title: 'Visi'),
+            const SizedBox(height: 10),
+            Text(
+              visionText,
+              style: const TextStyle(fontWeight: FontWeight.w800, height: 1.4),
+            ),
+            const SizedBox(height: 20),
+            const _MiniTitle(icon: Icons.flag_rounded, title: 'Misi'),
+            const SizedBox(height: 10),
+            ...missionTexts.map((mission) => _MissionText(mission)),
+          ],
         ],
       ),
     );
@@ -139,22 +188,17 @@ class _MiniTitle extends StatelessWidget {
       children: [
         Icon(icon, color: AppColors.primaryBlue),
         const SizedBox(width: 8),
-        Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+        Text(title,
+            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
       ],
     );
   }
 }
 
 class _ValueGrid extends StatelessWidget {
-  const _ValueGrid();
+  const _ValueGrid({required this.values});
 
-  static const values = [
-    ('Service Excellence', 'Pelayanan prima kepada nasabah.', Icons.support_agent_rounded),
-    ('Target Oriented', 'Orientasi pada pencapaian target.', Icons.track_changes_rounded),
-    ('Accountability', 'Bertanggung jawab sesuai ketentuan.', Icons.verified_rounded),
-    ('Reliable', 'Dapat diandalkan untuk menyelesaikan pekerjaan.', Icons.handshake_rounded),
-    ('Synergy', 'Membangun kerja sama yang baik.', Icons.groups_rounded),
-  ];
+  final List<HomeStarsValue> values;
 
   @override
   Widget build(BuildContext context) {
@@ -166,24 +210,32 @@ class _ValueGrid extends StatelessWidget {
           runSpacing: 12,
           children: values.map((value) {
             return SizedBox(
-              width: isWide ? (constraints.maxWidth - 12) / 2 : constraints.maxWidth,
+              width: isWide
+                  ? (constraints.maxWidth - 12) / 2
+                  : constraints.maxWidth,
               child: AppCard(
                 child: Row(
                   children: [
                     Container(
                       width: 48,
                       height: 48,
-                      decoration: BoxDecoration(color: AppColors.skyBlue, borderRadius: BorderRadius.circular(16)),
-                      child: Icon(value.$3, color: AppColors.primaryBlue),
+                      decoration: BoxDecoration(
+                          color: AppColors.skyBlue,
+                          borderRadius: BorderRadius.circular(16)),
+                      child: Icon(value.icon, color: AppColors.primaryBlue),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(value.$1, style: const TextStyle(fontWeight: FontWeight.w900)),
+                          Text(value.title,
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w900)),
                           const SizedBox(height: 3),
-                          Text(value.$2, style: const TextStyle(color: AppColors.muted, fontSize: 12.5)),
+                          Text(value.description,
+                              style: const TextStyle(
+                                  color: AppColors.muted, fontSize: 12.5)),
                         ],
                       ),
                     ),
@@ -199,6 +251,18 @@ class _ValueGrid extends StatelessWidget {
 }
 
 class _ContactCard extends StatelessWidget {
+  const _ContactCard({
+    required this.phone,
+    required this.whatsapp,
+    required this.whatsappDisplay,
+    required this.email,
+  });
+
+  final String phone;
+  final String whatsapp;
+  final String whatsappDisplay;
+  final String email;
+
   @override
   Widget build(BuildContext context) {
     return AppCard(
@@ -207,22 +271,22 @@ class _ContactCard extends StatelessWidget {
           _ContactTile(
             icon: Icons.phone_rounded,
             title: 'Telepon',
-            value: AppConstants.phone,
-            onTap: () => LaunchHelper.phone(AppConstants.phone),
+            value: phone,
+            onTap: () => LaunchHelper.phone(phone),
           ),
           const Divider(height: 22),
           _ContactTile(
             icon: Icons.chat_rounded,
             title: 'WhatsApp',
-            value: AppConstants.whatsappDisplay,
-            onTap: () => LaunchHelper.whatsapp(AppConstants.whatsapp),
+            value: whatsappDisplay,
+            onTap: () => LaunchHelper.whatsapp(whatsapp),
           ),
           const Divider(height: 22),
           _ContactTile(
             icon: Icons.email_rounded,
             title: 'Email',
-            value: AppConstants.email,
-            onTap: () => LaunchHelper.email(AppConstants.email),
+            value: email,
+            onTap: () => LaunchHelper.email(email),
           ),
         ],
       ),
@@ -231,7 +295,11 @@ class _ContactCard extends StatelessWidget {
 }
 
 class _ContactTile extends StatelessWidget {
-  const _ContactTile({required this.icon, required this.title, required this.value, required this.onTap});
+  const _ContactTile(
+      {required this.icon,
+      required this.title,
+      required this.value,
+      required this.onTap});
 
   final IconData icon;
   final String title;
@@ -250,7 +318,9 @@ class _ContactTile extends StatelessWidget {
             Container(
               width: 44,
               height: 44,
-              decoration: BoxDecoration(color: AppColors.skyBlue, borderRadius: BorderRadius.circular(16)),
+              decoration: BoxDecoration(
+                  color: AppColors.skyBlue,
+                  borderRadius: BorderRadius.circular(16)),
               child: Icon(icon, color: AppColors.primaryBlue),
             ),
             const SizedBox(width: 12),
@@ -258,8 +328,11 @@ class _ContactTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(color: AppColors.muted, fontSize: 12)),
-                  Text(value, style: const TextStyle(fontWeight: FontWeight.w900)),
+                  Text(title,
+                      style: const TextStyle(
+                          color: AppColors.muted, fontSize: 12)),
+                  Text(value,
+                      style: const TextStyle(fontWeight: FontWeight.w900)),
                 ],
               ),
             ),

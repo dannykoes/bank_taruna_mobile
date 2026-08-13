@@ -1,16 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/widgets/responsive_container.dart';
+import '../home/home_repository.dart';
 
-class TransactionScreen extends StatelessWidget {
+class TransactionScreen extends ConsumerWidget {
   const TransactionScreen({super.key});
 
-// 340 x 669 px
-  static const _assetPath = 'assets/images/a_Premium.png';
+  static const _fallbackImageUrl =
+      'https://banktaruna.com/frontend/bprtaruna/assets/img/banner/banner%20mobile%20coming%20soon.png';
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final homeData = ref.watch(homeDataProvider).maybeWhen(
+          data: (data) => data,
+          orElse: () => null,
+        );
+    final imageUrl = homeData?.transactionImageUrl ?? _fallbackImageUrl;
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final imageHeight = constraints.maxHeight * 0.72;
@@ -35,8 +43,8 @@ class TransactionScreen extends StatelessWidget {
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(24),
-                  child: Image.asset(
-                    _assetPath,
+                  child: Image.network(
+                    imageUrl,
                     fit: BoxFit.contain,
                     height: imageHeight.clamp(320.0, 680.0),
                   ),

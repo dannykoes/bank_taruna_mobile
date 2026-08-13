@@ -547,15 +547,11 @@ class _ProductGrid extends StatelessWidget {
         return Wrap(
           spacing: spacing,
           runSpacing: spacing,
-          children: groups.asMap().entries.map((entry) {
-            final index = entry.key;
-            final group = entry.value;
-
+          children: groups.map((group) {
             return SizedBox(
               width: cardWidth,
               child: _ProductTypeCard(
                 group: group,
-                index: index,
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
@@ -580,19 +576,14 @@ class _ProductGrid extends StatelessWidget {
 class _ProductTypeCard extends StatelessWidget {
   const _ProductTypeCard({
     required this.group,
-    required this.index,
     required this.onTap,
   });
 
   final _ProductTypeGroup group;
-  final int index;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final isPrimary = index.isEven;
-    final gradientColors = const [AppColors.primaryRed, AppColors.deepBlue];
-
     return AppCard(
       onTap: onTap,
       padding: EdgeInsets.zero,
@@ -633,11 +624,12 @@ class _ProductTypeCard extends StatelessWidget {
                         width: 58,
                         height: 58,
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(colors: gradientColors),
+                          color: AppColors.primaryBlue,
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: gradientColors.first.withOpacity(0.25),
+                              color:
+                                  AppColors.primaryBlue.withValues(alpha: 0.25),
                               blurRadius: 18,
                               offset: const Offset(0, 10),
                             ),
@@ -1435,7 +1427,6 @@ class _ProductTypeProductWrap extends StatelessWidget {
                 child: _ProductCard(
                   product: product,
                   productId: productId,
-                  index: index,
                   typeName: cardTypeName,
                   images: item.images,
                   content: item.content ?? content,
@@ -1582,7 +1573,6 @@ class _ProductCard extends ConsumerStatefulWidget {
   const _ProductCard({
     required this.product,
     required this.productId,
-    required this.index,
     required this.typeName,
     required this.onProductLoaded,
     this.content,
@@ -1591,7 +1581,6 @@ class _ProductCard extends ConsumerStatefulWidget {
 
   final ProductItem product;
   final String productId;
-  final int index;
   final String typeName;
   final ValueChanged<ProductItem> onProductLoaded;
   final String? content;
@@ -1637,10 +1626,6 @@ class _ProductCardState extends ConsumerState<_ProductCard> {
   @override
   Widget build(BuildContext context) {
     final imageUrl = widget.images ?? _productImageUrlOf(widget.product);
-    final isPrimary = widget.index.isEven;
-    final gradientColors = isPrimary
-        ? const [AppColors.primaryBlue, AppColors.deepBlue]
-        : const [AppColors.primaryRed, AppColors.deepBlue];
 
     return AppCard(
       onTap: _isLoading ? null : _handleTap,
@@ -1679,13 +1664,12 @@ class _ProductCardState extends ConsumerState<_ProductCard> {
                               width: 58,
                               height: 58,
                               decoration: BoxDecoration(
-                                gradient:
-                                    LinearGradient(colors: gradientColors),
+                                color: AppColors.primaryBlue,
                                 borderRadius: BorderRadius.circular(20),
                                 boxShadow: [
                                   BoxShadow(
-                                    color:
-                                        gradientColors.first.withOpacity(0.25),
+                                    color: AppColors.primaryBlue
+                                        .withValues(alpha: 0.25),
                                     blurRadius: 18,
                                     offset: const Offset(0, 10),
                                   ),
@@ -2358,7 +2342,7 @@ String? _dynamicStringOf(ProductItem item, String fieldName) {
 
 IconData _iconForProductType(String value) {
   final normalized = value.toLowerCase();
-
+// icon kredit, deposito, tabungan
   if (normalized.contains('kredit') ||
       normalized.contains('pinjaman') ||
       normalized.contains('loan')) {
