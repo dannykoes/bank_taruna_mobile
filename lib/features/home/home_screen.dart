@@ -336,19 +336,14 @@ class _ValuePlusCard extends StatelessWidget {
                           width: 48,
                           height: 48,
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [
-                                AppColors.primaryRed,
-                                AppColors.primaryBlue,
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(18),
+                            color: AppColors.primaryBlue,
+                            borderRadius: BorderRadius.circular(20),
                             boxShadow: [
                               BoxShadow(
                                 color: AppColors.primaryBlue
-                                    .withValues(alpha: 0.18),
-                                blurRadius: 16,
-                                offset: const Offset(0, 8),
+                                    .withValues(alpha: 0.25),
+                                blurRadius: 18,
+                                offset: const Offset(0, 10),
                               ),
                             ],
                           ),
@@ -558,6 +553,7 @@ class _ProductGrid extends StatelessWidget {
                       builder: (_) => ProductTypeScreen(
                         typeId: group.id,
                         typeName: group.title,
+                        bannerUrl: group.bannerUrl,
                         products: group.products,
                         onNavigate: onNavigate,
                       ),
@@ -584,6 +580,9 @@ class _ProductTypeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final iconUrl =
+        group.products.isEmpty ? null : _productIconUrlOf(group.products.first);
+
     return AppCard(
       onTap: onTap,
       padding: EdgeInsets.zero,
@@ -635,7 +634,31 @@ class _ProductTypeCard extends StatelessWidget {
                             ),
                           ],
                         ),
-                        child: Icon(group.icon, color: Colors.white),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: iconUrl == null
+                              ? Icon(group.icon, color: Colors.white)
+                              : CachedNetworkImage(
+                                  imageUrl: iconUrl,
+                                  width: 58,
+                                  height: 58,
+                                  fit: BoxFit.cover,
+                                  placeholder: (_, __) => const Center(
+                                    child: SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                  errorWidget: (_, __, ___) => Icon(
+                                    group.icon,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                        ),
                       ),
                     ),
                   ),
@@ -1107,12 +1130,14 @@ class ProductTypeScreen extends ConsumerWidget {
     super.key,
     required this.typeId,
     required this.typeName,
+    this.bannerUrl,
     required this.products,
     required this.onNavigate,
   });
 
   final String typeId;
   final String typeName;
+  final String? bannerUrl;
 
   // Data dari beranda tetap diterima untuk kebutuhan metadata kategori,
   // namun tidak dipakai sebagai fallback sub produk agar tidak muncul dummy.
@@ -1159,6 +1184,7 @@ class ProductTypeScreen extends ConsumerWidget {
                       _ProductTypeHero(
                         typeId: typeId,
                         typeName: typeName,
+                        bannerUrl: bannerUrl,
                         totalProducts: totalProducts,
                       ),
                       const SizedBox(height: 20),
@@ -1456,114 +1482,133 @@ class _ProductTypeHero extends StatelessWidget {
   const _ProductTypeHero({
     required this.typeId,
     required this.typeName,
+    required this.bannerUrl,
     required this.totalProducts,
   });
 
   final String typeId;
   final String typeName;
+  final String? bannerUrl;
   final int totalProducts;
 
   @override
   Widget build(BuildContext context) {
     final icon = _iconForProductType(typeName);
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30),
-        gradient: const LinearGradient(
-          colors: [
-            AppColors.primaryBlue,
-            AppColors.deepBlue,
-            AppColors.primaryRed,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(30),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(22),
+        decoration: BoxDecoration(
+          image: bannerUrl == null
+              ? null
+              : DecorationImage(
+                  image: CachedNetworkImageProvider(bannerUrl!),
+                  fit: BoxFit.cover,
+                  onError: (_, __) {},
+                ),
+          gradient: bannerUrl == null
+              ? const LinearGradient(
+                  colors: [
+                    AppColors.primaryBlue,
+                    AppColors.deepBlue,
+                    AppColors.primaryRed,
+                  ],
+                )
+              : null,
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.deepBlue.withOpacity(0.22),
+              blurRadius: 26,
+              offset: const Offset(0, 14),
+            ),
           ],
         ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.deepBlue.withOpacity(0.22),
-            blurRadius: 26,
-            offset: const Offset(0, 14),
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            right: -38,
-            bottom: -44,
-            child: Icon(
-              Icons.account_balance_rounded,
-              size: 155,
-              color: Colors.white.withOpacity(0.08),
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Hero(
-                    tag: 'product-type-$typeId',
-                    child: Material(
-                      color: Colors.transparent,
-                      child: Container(
-                        width: 66,
-                        height: 66,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.18),
-                          borderRadius: BorderRadius.circular(22),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.22),
+        child: Stack(
+          children: [
+            if (bannerUrl != null)
+              Positioned.fill(
+                child: Container(color: Colors.black.withValues(alpha: 0)),
+              ),
+            // Positioned(
+            //   right: -38,
+            //   bottom: -44,
+            //   child: Icon(
+            //     Icons.account_balance_rounded,
+            //     size: 155,
+            //     color: Colors.white.withValues(alpha: 0),
+            //   ),
+            // ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Hero(
+                      tag: 'product-type-$typeId',
+                      child: Material(
+                        color: Colors.transparent,
+                        child: Container(
+                          width: 66,
+                          height: 66,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0),
+                            borderRadius: BorderRadius.circular(22),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0),
+                            ),
                           ),
+                          child: Icon(icon,
+                              color: Colors.white.withValues(alpha: 0),
+                              size: 32),
                         ),
-                        child: Icon(icon, color: Colors.white, size: 32),
                       ),
                     ),
-                  ),
-                  const Spacer(),
-                  // Container(
-                  //   padding: const EdgeInsets.symmetric(
-                  //     horizontal: 12,
-                  //     vertical: 8,
-                  //   ),
-                  //   decoration: BoxDecoration(
-                  //     color: Colors.white.withOpacity(0.16),
-                  //     borderRadius: BorderRadius.circular(999),
-                  //   ),
-                  //   child: Text(
-                  //     '$totalProducts produk',
-                  //     style: const TextStyle(
-                  //       color: Colors.white,
-                  //       fontSize: 11,
-                  //       fontWeight: FontWeight.w900,
-                  //     ),
-                  //   ),
-                  // ),
-                ],
-              ),
-              const SizedBox(height: 18),
-              Text(
-                typeName,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w900,
-                      height: 1.08,
-                    ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Semua produk $typeName.',
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.88),
-                  height: 1.35,
-                  fontWeight: FontWeight.w600,
+                    const Spacer(),
+                    // Container(
+                    //   padding: const EdgeInsets.symmetric(
+                    //     horizontal: 12,
+                    //     vertical: 8,
+                    //   ),
+                    //   decoration: BoxDecoration(
+                    //     color: Colors.white.withOpacity(0.16),
+                    //     borderRadius: BorderRadius.circular(999),
+                    //   ),
+                    //   child: Text(
+                    //     '$totalProducts produk',
+                    //     style: const TextStyle(
+                    //       color: Colors.white,
+                    //       fontSize: 11,
+                    //       fontWeight: FontWeight.w900,
+                    //     ),
+                    //   ),
+                    // ),
+                  ],
                 ),
-              ),
-            ],
-          ),
-        ],
+                const SizedBox(height: 18),
+                Text(
+                  typeName,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        color: Colors.white.withValues(alpha: 0),
+                        fontWeight: FontWeight.w900,
+                        height: 1.08,
+                      ),
+                ),
+                // const SizedBox(height: 8),
+                // Text(
+                //   'Semua produk $typeName.',
+                //   style: TextStyle(
+                //     color: Colors.white.withOpacity(0.88),
+                //     height: 1.35,
+                //     fontWeight: FontWeight.w600,
+                //   ),
+                // ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -2111,6 +2156,7 @@ class _ProductTypeGroup {
     required this.subtitle,
     required this.icon,
     required this.products,
+    this.bannerUrl,
   });
 
   final String id;
@@ -2118,6 +2164,7 @@ class _ProductTypeGroup {
   final String subtitle;
   final IconData icon;
   final List<ProductItem> products;
+  final String? bannerUrl;
 }
 
 List<_ProductTypeGroup> _productGroupsFromApi(List<ProductItem> products) {
@@ -2145,6 +2192,7 @@ List<_ProductTypeGroup> _productGroupsFromApi(List<ProductItem> products) {
       subtitle: subtitle,
       icon: _iconForProductType(title),
       products: entry.value,
+      bannerUrl: _productBannerUrlOf(firstProduct),
     );
   }).toList();
 }
@@ -2244,6 +2292,23 @@ String? _productImageUrlOf(ProductItem item) {
   return null;
 }
 
+String? _productIconUrlOf(ProductItem item) {
+  final candidates = [
+    _dynamicStringOf(item, 'iconUrl'),
+    _dynamicStringOf(item, 'icon'),
+    _dynamicStringOf(item, 'icon_url'),
+    _dynamicStringOf(item, 'url_icon'),
+    _dynamicStringOf(item, 'logo'),
+  ];
+
+  for (final value in candidates) {
+    final iconUrl = _fullApiImageUrl(value);
+    if (iconUrl != null && iconUrl.trim().isNotEmpty) return iconUrl;
+  }
+
+  return null;
+}
+
 String? _productBannerUrlOf(ProductItem item) {
   debugPrint('product xxx ${item.banner}');
   final candidates = [
@@ -2264,6 +2329,9 @@ String? _productBannerUrlOf(ProductItem item) {
 }
 
 String? _dynamicStringOf(ProductItem item, String fieldName) {
+  final rawValue = _apiValueToString(item.raw[fieldName]);
+  if (rawValue != null && rawValue.trim().isNotEmpty) return rawValue.trim();
+
   try {
     final dynamic raw = item as dynamic;
 

@@ -41,35 +41,44 @@ class ProfileScreen extends ConsumerWidget {
             children: [
               const BrandHeader(subtitle: 'Profil dan kontak resmi'),
               const SizedBox(height: 22),
-              Container(
+              SizedBox(
                 width: double.infinity,
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
+                child: ClipRRect(
                   borderRadius: BorderRadius.circular(28),
-                  gradient: const LinearGradient(
-                      colors: [AppColors.primaryBlue, AppColors.primaryRed]),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(Icons.account_balance_rounded,
-                        color: Colors.white, size: 42),
-                    const SizedBox(height: 14),
-                    Text(
-                      AppConstants.bankName,
-                      style: Theme.of(context)
-                          .textTheme
-                          .headlineSmall
-                          ?.copyWith(
-                              color: Colors.white, fontWeight: FontWeight.w900),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      profileText,
-                      style: TextStyle(
-                          color: Colors.white.withOpacity(0.9), height: 1.4),
-                    ),
-                  ],
+                  child: Stack(
+                    children: [
+                      const Positioned.fill(
+                        child: CustomPaint(painter: _ProfileHeroPainter()),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(Icons.account_balance_rounded,
+                                color: Colors.white, size: 42),
+                            const SizedBox(height: 14),
+                            Text(
+                              AppConstants.bankName,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .headlineSmall
+                                  ?.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w900),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              profileText,
+                              style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.9),
+                                  height: 1.4),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 24),
@@ -108,6 +117,85 @@ class ProfileScreen extends ConsumerWidget {
       ],
     );
   }
+}
+
+class _ProfileHeroPainter extends CustomPainter {
+  const _ProfileHeroPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final backgroundPaint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          AppColors.primaryBlue,
+          Color(0xFF3157D9),
+          AppColors.primaryRed,
+        ],
+      ).createShader(Offset.zero & size);
+
+    canvas.drawRect(Offset.zero & size, backgroundPaint);
+
+    final redOrbPaint = Paint()
+      ..color = AppColors.primaryRed.withValues(alpha: 0.78);
+    canvas.drawCircle(
+      Offset(size.width * 0.86, size.height * 0.22),
+      size.shortestSide * 0.42,
+      redOrbPaint,
+    );
+
+    final blueOrbPaint = Paint()..color = Colors.white.withValues(alpha: 0.12);
+    canvas.drawCircle(
+      Offset(size.width * 0.72, size.height * 0.88),
+      size.shortestSide * 0.36,
+      blueOrbPaint,
+    );
+
+    final ribbonPaint = Paint()..color = Colors.white.withValues(alpha: 0.16);
+    final ribbon = Path()
+      ..moveTo(size.width * 0.36, 0)
+      ..quadraticBezierTo(
+        size.width * 0.56,
+        size.height * 0.28,
+        size.width,
+        size.height * 0.18,
+      )
+      ..lineTo(size.width, size.height * 0.42)
+      ..quadraticBezierTo(
+        size.width * 0.56,
+        size.height * 0.52,
+        size.width * 0.28,
+        0,
+      )
+      ..close();
+    canvas.drawPath(ribbon, ribbonPaint);
+
+    final cardPaint = Paint()..color = Colors.white.withValues(alpha: 0.18);
+    final cardRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(
+        size.width * 0.64,
+        size.height * 0.48,
+        size.width * 0.26,
+        size.height * 0.2,
+      ),
+      const Radius.circular(18),
+    );
+    canvas.drawRRect(cardRect, cardPaint);
+
+    final linePaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.24)
+      ..strokeWidth = 4
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(
+      Offset(size.width * 0.69, size.height * 0.58),
+      Offset(size.width * 0.84, size.height * 0.58),
+      linePaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _VisionMissionCard extends StatelessWidget {

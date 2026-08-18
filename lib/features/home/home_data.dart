@@ -87,8 +87,15 @@ class HomeStarsValue {
   final IconData icon;
 }
 
-List<ProductItem> bankProducts() {
-  return const [
+List<ProductItem> bankProducts({
+  String? iconKredit,
+  String? iconDeposito,
+  String? iconTabungan,
+  String? bannerKredit,
+  String? bannerDeposito,
+  String? bannerTabungan,
+}) {
+  return [
     ProductItem(
       title: 'Kredit',
       description:
@@ -96,6 +103,8 @@ List<ProductItem> bankProducts() {
       icon: Icons.account_balance_wallet_rounded,
       routeLabel: 'Simulasi',
       colors: '#ffffff',
+      banner: bannerKredit,
+      raw: _productAssetRaw(iconKredit),
     ),
     ProductItem(
       title: 'Deposito',
@@ -104,6 +113,8 @@ List<ProductItem> bankProducts() {
       icon: Icons.savings_rounded,
       routeLabel: 'Info',
       colors: '#ffffff',
+      banner: bannerDeposito,
+      raw: _productAssetRaw(iconDeposito),
     ),
     ProductItem(
       title: 'Tabungan',
@@ -112,6 +123,14 @@ List<ProductItem> bankProducts() {
       icon: Icons.credit_card_rounded,
       routeLabel: 'Ajukan',
       colors: '#ffffff',
+      banner: bannerTabungan,
+      raw: _productAssetRaw(iconTabungan),
     ),
   ];
+}
+
+Map<String, dynamic> _productAssetRaw(String? iconUrl) {
+  if (iconUrl == null || iconUrl.trim().isEmpty) return const {};
+
+  return {'iconUrl': iconUrl};
 }

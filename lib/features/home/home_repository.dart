@@ -43,15 +43,7 @@ class HomeRepository {
       );
     }).toList();
 
-    debugPrint('Home data response Product: ${data['product']}');
-    final products = _apiList(data['product']).asMap().entries.map((entry) {
-      return _homeProductFromJson(
-        _asStringDynamicMap(entry.value),
-        entry.key,
-      );
-    }).where((product) {
-      return product.title.trim().isNotEmpty;
-    }).toList();
+    final productAssets = _homeProductAssets([data, body]);
 
     debugPrint('Home data response News: ${data['news']}');
     final news = _apiList(data['news']).map((raw) {
@@ -159,7 +151,14 @@ class HomeRepository {
 
     return HomeData(
       banners: banners,
-      products: bankProducts(),
+      products: bankProducts(
+        iconKredit: productAssets.iconKredit,
+        iconDeposito: productAssets.iconDeposito,
+        iconTabungan: productAssets.iconTabungan,
+        bannerKredit: productAssets.bannerKredit,
+        bannerDeposito: productAssets.bannerDeposito,
+        bannerTabungan: productAssets.bannerTabungan,
+      ),
       latestNews: news,
       profileText: _apiStringFromMaps([
         body,
@@ -521,82 +520,57 @@ String _normalizeWhatsapp(String value) {
   return digits.isEmpty ? value : digits;
 }
 
-ProductItem _homeProductFromJson(Map<String, dynamic> json, int index) {
-  final title = _apiString(
-    json,
-    ['title', 'nama_produk', 'namaProduk', 'name', 'nama', 'judul'],
-    fallback: '',
+_HomeProductAssets _homeProductAssets(List<Map<String, dynamic>> maps) {
+  return _HomeProductAssets(
+    iconKredit: _homeImageUrl(_apiValueFromMaps(maps, [
+      'iconkredit',
+      'icon_kredit',
+      'iconKredit',
+    ])),
+    iconDeposito: _homeImageUrl(_apiValueFromMaps(maps, [
+      'icondeposito',
+      'icon_deposito',
+      'iconDeposito',
+    ])),
+    iconTabungan: _homeImageUrl(_apiValueFromMaps(maps, [
+      'icontabungan',
+      'icon_tabungan',
+      'iconTabungan',
+    ])),
+    bannerKredit: _homeImageUrl(_apiValueFromMaps(maps, [
+      'bannerkredit',
+      'banner_kredit',
+      'bannerKredit',
+    ])),
+    bannerDeposito: _homeImageUrl(_apiValueFromMaps(maps, [
+      'bannerdeposito',
+      'banner_deposito',
+      'bannerDeposito',
+    ])),
+    bannerTabungan: _homeImageUrl(_apiValueFromMaps(maps, [
+      'bannertabungan',
+      'banner_tabungan',
+      'bannerTabungan',
+    ])),
   );
-  final typeName = _apiString(
-    json,
-    [
-      'jenis',
-      'jenis_produk',
-      'jenisProduk',
-      'kategori',
-      'nama_kategori',
-      'namaKategori',
-      'category',
-      'category_name',
-      'categoryName',
-      'type',
-      'product_type',
-      'productType',
-    ],
-    fallback: title,
-  );
-  final typeId = _apiString(
-    json,
-    [
-      'type_id',
-      'typeId',
-      'jenis_id',
-      'jenisId',
-      'id_jenis',
-      'idJenis',
-      'category_id',
-      'categoryId',
-      'kategori_id',
-      'kategoriId',
-      'product_type_id',
-      'productTypeId',
-      'group_id',
-      'groupId',
-      'id',
-    ],
-    fallback: '',
-  );
-  final imageUrl = _homeProductImageUrl(json);
-  final raw = <String, dynamic>{
-    ...json,
-    'type': typeName,
-    'typeId': typeId,
-    'thumbnail': imageUrl,
-    'banner': imageUrl,
-  };
+}
 
-  return ProductItem(
-    title: title,
-    description: _apiString(
-      json,
-      [
-        'description',
-        'deskripsi',
-        'keterangan',
-        'summary',
-        'excerpt',
-        'short_description',
-        'shortDescription',
-      ],
-      fallback: 'Pilih untuk melihat daftar produk.',
-    ),
-    icon: _iconForHomeProduct(typeName.isEmpty ? title : typeName),
-    routeLabel: 'Info',
-    colors: '#ffffff',
-    content: _apiString(json, ['content', 'konten', 'body'], fallback: ''),
-    images: imageUrl,
-    raw: raw,
-  );
+class _HomeProductAssets {
+  const _HomeProductAssets({
+    this.iconKredit,
+    this.iconDeposito,
+    this.iconTabungan,
+    this.bannerKredit,
+    this.bannerDeposito,
+    this.bannerTabungan,
+  });
+
+  final String? iconKredit;
+  final String? iconDeposito;
+  final String? iconTabungan;
+  final String? bannerKredit;
+  final String? bannerDeposito;
+  final String? bannerTabungan;
 }
 
 String _apiString(
@@ -654,18 +628,6 @@ String? _apiValueToString(dynamic value) {
   return text;
 }
 
-String? _homeProductImageUrl(Map<String, dynamic> json) {
-  final rawImage = _apiValueToString(json['thumbnail']) ??
-      _apiValueToString(json['url_thumbnail']) ??
-      _apiValueToString(json['banner']) ??
-      _apiValueToString(json['url_banner']) ??
-      _apiValueToString(json['image']) ??
-      _apiValueToString(json['gambar']) ??
-      _apiValueToString(json['images']);
-
-  return _homeImageUrl(rawImage);
-}
-
 String? _homeImageUrl(dynamic raw) {
   final value = _apiValueToString(raw);
   if (value == null || value.trim().isEmpty) return null;
@@ -694,20 +656,4 @@ String? _homeImageUrl(dynamic raw) {
   if (!imagePath.contains('/')) return recfileUrl(imagePath);
 
   return '$cleanBaseUrl/${imagePath.replaceAll(RegExp(r'^/+'), '')}';
-}
-
-IconData _iconForHomeProduct(String value) {
-  final normalized = value.toLowerCase();
-
-  if (normalized.contains('kredit') || normalized.contains('pinjaman')) {
-    return Icons.payments_rounded;
-  }
-  if (normalized.contains('deposito') || normalized.contains('deposit')) {
-    return Icons.savings_rounded;
-  }
-  if (normalized.contains('tabungan') || normalized.contains('saving')) {
-    return Icons.account_balance_wallet_rounded;
-  }
-
-  return Icons.account_balance_rounded;
 }
